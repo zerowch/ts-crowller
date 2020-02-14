@@ -2,30 +2,37 @@
  * @Author: Zero W
  * @Date: 2020-02-13 14:56:06
  * @Description: crowller
- * @LastEditTime : 2020-02-14 15:05:34
+ * @LastEditTime : 2020-02-14 17:23:01
  * @LastEditors  : Zero W
  * @-<-zw->-
  */
 import superagent from 'superagent';
 import cheerio from 'cheerio';
 
+import fs from 'fs';
+import path from 'path';
+
 interface Course {
-  title: string,
-  count: number
+  title: string;
+  count: number;
 }
 
-interface CrowData {
+interface CourseResult {
   time: number;
-  data: []
+  data: Course[];
+}
+
+interface Content {
+  [propName: number]: Course[];
 }
 
 class Crowller {
   private secret = 'secretKey';
   private url = `http://www.dell-lee.com/typescript/demo.html?secret=${this.secret}`;
-  private rawHtml = '';
-  public crowData: unknown
+  // private rawHtml = '';
+  // public crowData: unknown
 
-  private getHtmlData (html: string) {
+  private getCourseInfo (html: string) {
     const $ = cheerio.load(html)
     const courseItems = $('.course-item');
     // console.log(typeof courseItems)
@@ -42,7 +49,7 @@ class Crowller {
       })
     })
 
-    this.crowData = {
+    return {
       time: new Date().getTime(),
       data: course
     }
@@ -50,21 +57,45 @@ class Crowller {
 
   async getRawHtml () {
     const result = await superagent.get(this.url);
-    this.rawHtml = result.text;
-    this.getHtmlData(this.rawHtml)
+    return result.text;
+    // this.getHtmlData(this.rawHtml)
   }
+
+  async generateJsonContent (courseInfo: CourseResult) {
+    const filePath = path.resolve(__dirname, '../data/course.json')
+    let fileContent: Content = {};
+    if (fs.existsSync(filePath)) {
+      const readContent = fs.readFileSync(filePath, 'utf-8')
+      try {
+        fileContent = JSON.parse(readContent);
+      } catch (error) {
+        console.log('原文件json数据格式有误')
+      }
+    }
+    fileContent[courseInfo.time] = courseInfo.data;
+    console.log(fileContent)
+    fs.writeFileSync(filePath, JSON.stringify(fileContent));
+  }
+
+  async initSpiderProcess () {
+    const html = await this.getRawHtml()
+    const courseInfo = this.getCourseInfo(html)
+
+    this.generateJsonContent(courseInfo)
+  }
+
   constructor () {
     console.log('crowller constructor');
-    this.getRawHtml();
+    this.initSpiderProcess();
   }
 }
 
 const crowller = new Crowller();
  
-const timer = setInterval(() => {
-  // console.log(crowller)
-  console.log(crowller.crowData);
-  if (crowller.crowData) {
-    clearInterval(timer);
-  }
-}, 500);
+// const timer = setInterval(() => {
+//   // console.log(crowller)
+//   console.log(crowller.crowData);
+//   if (crowller.crowData) {
+//     clearInterval(timer);
+//   }
+// }, 500);
