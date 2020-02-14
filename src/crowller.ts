@@ -2,7 +2,7 @@
  * @Author: Zero W
  * @Date: 2020-02-13 14:56:06
  * @Description: crowller
- * @LastEditTime : 2020-02-14 17:23:01
+ * @LastEditTime : 2020-02-14 17:26:45
  * @LastEditors  : Zero W
  * @-<-zw->-
  */
@@ -31,6 +31,7 @@ class Crowller {
   private url = `http://www.dell-lee.com/typescript/demo.html?secret=${this.secret}`;
   // private rawHtml = '';
   // public crowData: unknown
+  FilePath = path.resolve(__dirname, '../data/course.json')
 
   private getCourseInfo (html: string) {
     const $ = cheerio.load(html)
@@ -62,7 +63,7 @@ class Crowller {
   }
 
   async generateJsonContent (courseInfo: CourseResult) {
-    const filePath = path.resolve(__dirname, '../data/course.json')
+    const filePath = this.FilePath
     let fileContent: Content = {};
     if (fs.existsSync(filePath)) {
       const readContent = fs.readFileSync(filePath, 'utf-8')
@@ -73,15 +74,18 @@ class Crowller {
       }
     }
     fileContent[courseInfo.time] = courseInfo.data;
-    console.log(fileContent)
-    fs.writeFileSync(filePath, JSON.stringify(fileContent));
+    // console.log(fileContent)
+    return fileContent
   }
 
   async initSpiderProcess () {
+    const filePath = this.FilePath
     const html = await this.getRawHtml()
     const courseInfo = this.getCourseInfo(html)
 
-    this.generateJsonContent(courseInfo)
+    const fileContent = await this.generateJsonContent(courseInfo)
+
+    fs.writeFileSync(filePath, JSON.stringify(fileContent));
   }
 
   constructor () {
