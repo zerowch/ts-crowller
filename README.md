@@ -1,2 +1,2 @@
 # ts-crowller
-ts-crowller
+typescript course => ts-crowller
