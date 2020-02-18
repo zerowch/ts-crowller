@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "tsc": "tsc",
     "dev": "ts-node ./src/crowller.ts"
   },
   "keywords": [],
